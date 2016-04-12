@@ -20,6 +20,8 @@ import yaes.ui.visualization.painters.PainterHelper;
  */
 public class paintCatastrophicEvent implements IPainter, Serializable {
 
+
+	private static final long serialVersionUID = -1413325070027223356L;
 	private PaintSpec activeSpec = null;
 	//private PaintSpec notactiveSpec = null;
 

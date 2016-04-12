@@ -20,7 +20,11 @@ import yaes.world.physical.location.Location;
 public class IveSinkAgent extends AbstractSensorAgent implements
         IntruderTrackingMessageConstants {
 
-    protected IveWorldModel worldModel;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7314125575032568106L;
+	protected IveWorldModel worldModel;
     protected IveReasoner reasoner;
     private Rectangle2D.Double interestRectangle;
 

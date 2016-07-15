@@ -49,7 +49,8 @@ public class paintIntruderIcon extends paintMobileNode implements Serializable {
 
 	private void addIcon(IntruderNodeType type, String iconName) {
 		try {
-			InputStream is = getClass().getResourceAsStream(
+			
+			InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream(
 					"images/" + iconName + "-" + iconPostFix + ".png");
 			// URL url = getClass().getResource("images/" + iconName + ".png");
 			Image img = ImageIO.read(is);

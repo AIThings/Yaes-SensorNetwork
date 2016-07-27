@@ -36,18 +36,18 @@ public class BpaRouterHelper {
 		retval.add(gates);
 		Set<AbstractSensorAgent> fanouts = new HashSet<>();
 		retval.add(fanouts);
-
+		AbstractSensorAgent sinkAgent = world.getSinkNode().getAgent();
 		// create list of abstract sensor agents enabled and a certain type
 		List<AbstractSensorAgent> allAgents = SensorRoutingHelper
 				.getSensorAgents(world, AbstractSensorAgent.class);
 		List<AbstractSensorAgent> sourceAgents = new ArrayList<>(
 				allAgents);
-		allAgents.add(world.getSinkNode().getAgent());
+		allAgents.add(sinkAgent);
 		// if the bridge agent is on the path, the node is on the far side, if
 		// it is not, it is on the near side
 		for (AbstractSensorAgent source : sourceAgents) {
 			List<String> path = SensorRoutingHelper.getShortestPath(allAgents,
-					source, world.getSinkNode().getAgent());
+					source, sinkAgent);
 			if (source.equals(bridgeAgent)) {
 				continue;
 			}

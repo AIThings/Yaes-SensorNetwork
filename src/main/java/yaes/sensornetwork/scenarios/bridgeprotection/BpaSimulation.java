@@ -19,6 +19,9 @@ public class BpaSimulation extends SensorNetworkSimulation {
 		if (time == 5.0) {
 			((BpaContext) theContext).turnOnCatastrophicEvent();
 		}
+		if (time == 25.0) {
+			((BpaContext) theContext).turnOnNodePlacementEvent();
+		}
 		return super.update(time, sip, sop, theContext);
 	}
 

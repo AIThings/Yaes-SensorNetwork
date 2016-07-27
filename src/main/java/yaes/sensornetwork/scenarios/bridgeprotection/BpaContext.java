@@ -7,6 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import yaes.framework.simulation.SimulationInput;
 import yaes.framework.simulation.SimulationOutput;
 import yaes.sensornetwork.Environment;
@@ -25,7 +28,7 @@ import yaes.ui.text.TextUi;
 import yaes.ui.visualization.Visualizer;
 
 public class BpaContext extends SensorNetworkContext implements BpaConstants {
-
+	final static Logger logger = LoggerFactory.getLogger(SensorNetworkContext.class);
 	private static final long serialVersionUID = 7706523352468637638L;
 	public CatastrophicEvent catastrophicEvent;
 
@@ -39,8 +42,7 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 	 * @param sip
 	 */
 	public void applyBPA() {
-		if (!sip.getParameterEnum(SensorAgentClass.class).equals(
-				SensorAgentClass.BridgeProtectionAlgorithm)) {
+		if (!sip.getParameterEnum(SensorAgentClass.class).equals(SensorAgentClass.BridgeProtectionAlgorithm)) {
 			return;
 		}
 		if (sip.getParameterInt(BRIDGE_PROTECTION_ACTIVE) == 0) {
@@ -55,8 +57,7 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 				break;
 			}
 		}
-		List<Set<AbstractSensorAgent>> classes = BpaRouterHelper
-				.determineNodeClasses(bridgeAgent, sensorWorld);
+		List<Set<AbstractSensorAgent>> classes = BpaRouterHelper.determineNodeClasses(bridgeAgent, sensorWorld);
 		Set<AbstractSensorAgent> farSide = classes.get(0);
 		Set<AbstractSensorAgent> nearSide = classes.get(1);
 		Set<AbstractSensorAgent> gates = classes.get(2);
@@ -69,8 +70,8 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 			if (agent.equals(bridgeAgent)) {
 				agent.setBpaState(BpaState.BRIDGE);
 				List<String> fanoutNames = new ArrayList<>();
-				for (AbstractSensorAgent asa : fanouts) {
-					fanoutNames.add(asa.getName());
+				for (AbstractSensorAgent fanoutSenorAgent : fanouts) {
+					fanoutNames.add(fanoutSenorAgent.getName());
 				}
 				agent.setFanoutNodes(fanoutNames);
 				continue;
@@ -93,9 +94,13 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 			}
 			TextUi.println("Node " + agent.getName() + " is unclassified!");
 		}
+		routePaths();
+	}
+
+	protected void routePaths() {
 		// set the fanout nodes forwarding nodes to be disjoint
-		List<AbstractSensorAgent> sourceAgents = SensorRoutingHelper
-				.getSensorAgents(sensorWorld, ForwarderSensorAgent.class);
+		List<AbstractSensorAgent> sourceAgents = SensorRoutingHelper.getSensorAgents(sensorWorld,
+				ForwarderSensorAgent.class);
 		Set<String> fanoutNext = new HashSet<>();
 		for (AbstractSensorAgent source : sourceAgents) {
 			if (((BpaAgent) source).getBpaState() != BpaAgent.BpaState.FANOUT) {
@@ -114,26 +119,20 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 				reminderAgents.add(source);
 			}
 			reminderAgents.add(theSinkNode.getAgent());
-			List<String> path = SensorRoutingHelper.getShortestPath(
-					reminderAgents, source, theSinkNode.getAgent());
-			
-			if(sip.getParameterInt(RNG_ROUTING) == 1)
-				 path = SensorRoutingHelper.getRNGShortestPath(
-						reminderAgents, source, theSinkNode.getAgent());				
-			
-			else if(sip.getParameterInt(GREEDY_ROUTING) == 1)
-				 path = SensorRoutingHelper.getGreedyNeighborPaths(
-							reminderAgents, source, theSinkNode.getAgent());				
+			List<String> path = SensorRoutingHelper.getShortestPath(reminderAgents, source, theSinkNode.getAgent());
 
+			if (sip.getParameterInt(RNG_ROUTING) == 1)
+				path = SensorRoutingHelper.getRNGShortestPath(reminderAgents, source, theSinkNode.getAgent());
+
+			else if (sip.getParameterInt(GREEDY_ROUTING) == 1)
+				path = SensorRoutingHelper.getGreedyNeighborPaths(reminderAgents, source, theSinkNode.getAgent());
 
 			if (path != null) {
 				String forwardingDestination = path.get(1);
-				((ForwarderSensorAgent) source)
-						.setForwardingDestination(forwardingDestination);
+				((ForwarderSensorAgent) source).setForwardingDestination(forwardingDestination);
 				fanoutNext.add(forwardingDestination);
 			}
 		}
-
 	}
 
 	@Override
@@ -157,8 +156,7 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 	public void createVisualRepresentation(Visualizer existingVisualizer) {
 		super.createVisualRepresentation(existingVisualizer);
 		visualizer.addObject(catastrophicEvent, new paintCatastrophicEvent());
-		visualizer.getVisualizationProperties().setPropertyValue(
-				paintSensorNode.vpropPaintRoutes, new Boolean(true));
+		visualizer.getVisualizationProperties().setPropertyValue(paintSensorNode.vpropPaintRoutes, new Boolean(true));
 	}
 
 	@Override
@@ -186,18 +184,65 @@ public class BpaContext extends SensorNetworkContext implements BpaConstants {
 	public void turnOnCatastrophicEvent() {
 		catastrophicEvent.applyEvent(sensorWorld);
 		// redoing the paths
-	 	SensorRoutingHelper.createPathsForForwarderSensorAgents(
-	 			theSinkNode.getAgent(), sensorWorld);	
-		if(sip.getParameterInt(RNG_ROUTING) == 1)
-			SensorRoutingHelper.createRNGPathsForForwarderSensorAgents(
-					theSinkNode.getAgent(), sensorWorld);			
-		else if(sip.getParameterInt(GREEDY_ROUTING) == 1)
-			SensorRoutingHelper.createGreedyPathsForForwarderSensorAgents(
-					theSinkNode.getAgent(), sensorWorld);			
+		SensorRoutingHelper.createPathsForForwarderSensorAgents(theSinkNode.getAgent(), sensorWorld);
+		if (sip.getParameterInt(RNG_ROUTING) == 1)
+			SensorRoutingHelper.createRNGPathsForForwarderSensorAgents(theSinkNode.getAgent(), sensorWorld);
+		else if (sip.getParameterInt(GREEDY_ROUTING) == 1)
+			SensorRoutingHelper.createGreedyPathsForForwarderSensorAgents(theSinkNode.getAgent(), sensorWorld);
 
-		if (sip.getParameterEnum(SensorAgentClass.class).equals(
-				SensorAgentClass.BridgeProtectionAlgorithm)) {
+		if (sip.getParameterEnum(SensorAgentClass.class).equals(SensorAgentClass.BridgeProtectionAlgorithm)) {
 			applyBPA();
 		}
+	}
+
+	public void turnOnNodePlacementEvent() {
+		logger.info("Turning on the node placement");
+		String bridgeName = "S-30";
+		AbstractSensorAgent bridgeAgent = null;
+		for (SensorNode candidate : sensorWorld.getSensorNodes()) {
+			if (candidate.getName().equals(bridgeName)) {
+				bridgeAgent = candidate.getAgent();
+				candidate.setEnabled(true);
+				break;
+			}
+		}
+		List<Set<AbstractSensorAgent>> classes = BpaRouterHelper.determineNodeClasses(bridgeAgent, sensorWorld);
+		Set<AbstractSensorAgent> farSide = classes.get(0);
+		Set<AbstractSensorAgent> nearSide = classes.get(1);
+		Set<AbstractSensorAgent> gates = classes.get(2);
+		Set<AbstractSensorAgent> fanouts = classes.get(3);
+		for (SensorNode node : sensorWorld.getSensorNodes()) {
+			if (!node.isEnabled()) {
+				continue;
+			}
+			BpaAgent agent = (BpaAgent) node.getAgent();
+			if (agent.equals(bridgeAgent)) {
+				agent.setBpaState(BpaState.BRIDGE);
+				List<String> fanoutNames = new ArrayList<>();
+				for (AbstractSensorAgent asa : fanouts) {
+					fanoutNames.add(asa.getName());
+				}
+				agent.setFanoutNodes(fanoutNames);
+				continue;
+			}
+			// if (farSide.contains(agent)) {
+			// agent.setBpaState(BpaState.FARSIDE);
+			// continue;
+			// }
+			// if (nearSide.contains(agent)) {
+			// agent.setBpaState(BpaState.NEARSIDE);
+			// continue;
+			// }
+			// if (gates.contains(agent)) {
+			// agent.setBpaState(BpaState.GATE);
+			// continue;
+			// }
+			// if (fanouts.contains(agent)) {
+			// agent.setBpaState(BpaState.FANOUT);
+			// continue;
+			// }
+			TextUi.println("Node " + agent.getName() + " is unclassified!");
+		}
+		routePaths();
 	}
 }
